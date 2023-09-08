@@ -1,8 +1,8 @@
 package com.marlabs.poc.controller;
 
-import static com.marlabs.poc.constants.UserConstants.OBJECT_ID_MAME;
-import static com.marlabs.poc.constants.UserConstants.OBJECT_TYPE_NAME;
-import static com.marlabs.poc.constants.UserConstants.PRE_ID_DELIMITER;
+import static com.marlabs.poc.constants.UserConstants.*;
+
+import java.util.Map;
 
 import org.everit.json.schema.ValidationException;
 import org.json.JSONException;
@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -93,6 +94,43 @@ public class UserController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(" {\"Message\": \"Successfully created user with key: " + key + "\"}");
+    }
+    
+    @GetMapping(path = "/{objectType}/{objectId}", produces = "application/json")
+    public ResponseEntity<Object> getMedicalPlan(@RequestHeader HttpHeaders headers, @PathVariable String objectId,
+                                                 @PathVariable String objectType) {
+        String errorMessage = authorizationService.verifyToken(headers);
+        if (errorMessage != null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JSONObject().put("Error: ", errorMessage).toString());
+        }
+
+        String redisKey = objectType + PRE_ID_DELIMITER + objectId;
+        if (!userService.existsRedisKey(redisKey)) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new JSONObject()
+                            .put("Error", "ObjectId doesn't exist!")
+                            .toString());
+        }
+
+        String receivedETag = headers.getFirst(IF_NONE_MATCH_HEADER);
+        String actualEtag = "";
+        if (objectType.equals(USER_OBJECT_TYPE)) {
+            actualEtag = userService.getMedicalPlanEtag(redisKey);
+            if (receivedETag != null && receivedETag.equals(actualEtag)) {
+                return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                        .eTag(actualEtag)
+                        .body(" {\"Message\": \"Medical plan hasn't been modified!" + "\"}");
+            }
+        }
+
+        Map<String, Object> plan = userService.getMedicalPlan(redisKey);
+        return ResponseEntity
+                .ok()
+                .eTag(actualEtag)
+                .body(new JSONObject(plan).toString());
     }
     
 }

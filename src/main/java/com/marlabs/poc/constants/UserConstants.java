@@ -9,4 +9,7 @@ public class UserConstants {
     public static final String PRE_ID_DELIMITER = ":";
     public static final String PRE_FIELD_DELIMITER = ">>";
     public static final String REDIS_ALL_PATTERN = "*";
+    public final static String ETAG_KEY_NAME = "eTag";
+    public static final String IF_NONE_MATCH_HEADER = "If-None-Match";
+    public static final String IF_MATCH_HEADER = "If-Match";
 }
