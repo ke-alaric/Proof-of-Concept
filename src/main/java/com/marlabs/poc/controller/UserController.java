@@ -134,8 +134,9 @@ public class UserController {
                 .body(new JSONObject(plan).toString());
     }
     
-    @DeleteMapping(path = "/{objectId}", produces = "application/json")
-    public ResponseEntity<Object> deleteUser(@RequestHeader HttpHeaders headers, @PathVariable String objectId) {
+    @DeleteMapping(path = "/{objectType}/{objectId}", produces = "application/json")
+    public ResponseEntity<Object> deleteUser(@RequestHeader HttpHeaders headers, @PathVariable String objectId,
+    												@PathVariable String objectType) {
         String errorMessage = authorizationService.verifyToken(headers);
         if (errorMessage != null) {
             return ResponseEntity
@@ -143,7 +144,7 @@ public class UserController {
                     .body(new JSONObject().put("Error: ", errorMessage).toString());
         }
 
-        String redisKey = USER_OBJECT_TYPE + PRE_ID_DELIMITER + objectId;
+        String redisKey = objectType + PRE_ID_DELIMITER + objectId;
         if (!userService.existsRedisKey(redisKey)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new JSONObject()
