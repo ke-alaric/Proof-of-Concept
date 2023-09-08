@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -97,7 +98,7 @@ public class UserController {
     }
     
     @GetMapping(path = "/{objectType}/{objectId}", produces = "application/json")
-    public ResponseEntity<Object> getMedicalPlan(@RequestHeader HttpHeaders headers, @PathVariable String objectId,
+    public ResponseEntity<Object> getUser(@RequestHeader HttpHeaders headers, @PathVariable String objectId,
                                                  @PathVariable String objectType) {
         String errorMessage = authorizationService.verifyToken(headers);
         if (errorMessage != null) {
@@ -131,6 +132,39 @@ public class UserController {
                 .ok()
                 .eTag(actualEtag)
                 .body(new JSONObject(plan).toString());
+    }
+    
+    @DeleteMapping(path = "/{objectId}", produces = "application/json")
+    public ResponseEntity<Object> deleteUser(@RequestHeader HttpHeaders headers, @PathVariable String objectId) {
+        String errorMessage = authorizationService.verifyToken(headers);
+        if (errorMessage != null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JSONObject().put("Error: ", errorMessage).toString());
+        }
+
+        String redisKey = USER_OBJECT_TYPE + PRE_ID_DELIMITER + objectId;
+        if (!userService.existsRedisKey(redisKey)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new JSONObject()
+                            .put("Warning", "ObjectId doesn't exist!")
+                            .toString());
+        }
+
+        String receivedETag = headers.getFirst(IF_MATCH_HEADER);
+        String actualEtag = userService.getMedicalPlanEtag(redisKey);
+        if (receivedETag != null && !receivedETag.equals(actualEtag)) {
+            return ResponseEntity
+                    .status(HttpStatus.PRECONDITION_FAILED)
+                    .eTag(actualEtag)
+                    .build();
+        }
+
+        userService.deleteMedicalPlan(redisKey);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
     
 }
