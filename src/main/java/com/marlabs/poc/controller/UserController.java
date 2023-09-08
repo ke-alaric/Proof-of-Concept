@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -166,6 +167,47 @@ public class UserController {
         return ResponseEntity
                 .noContent()
                 .build();
+    }
+    
+    @PatchMapping(path = "/{objectType}/{objectId}", produces = "application/json")
+    public ResponseEntity<Object> patchPlan(@RequestHeader HttpHeaders headers, @RequestBody String user,
+                                            @PathVariable String objectId, @PathVariable String objectType) {
+        String errorMessage = authorizationService.verifyToken(headers);
+        if (errorMessage != null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JSONObject().put("Error: ", errorMessage).toString());
+        }
+
+        JSONObject jsonObject;
+        try {
+            jsonObject = new JSONObject(user);
+        } catch (JSONException jsonException) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new JSONObject().put("Error", "Illegal Json data received!").toString());
+        }
+
+        String redisKey = objectType + PRE_ID_DELIMITER + objectId;
+        if (!userService.existsRedisKey(redisKey)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new JSONObject().put("Message", "ObjectId does not exist").toString());
+        }
+
+        String receivedETag = headers.getFirst(IF_MATCH_HEADER);
+        String actualEtag = userService.getMedicalPlanEtag(redisKey);
+        if (receivedETag != null && !receivedETag.equals(actualEtag)) {
+            return ResponseEntity
+                    .status(HttpStatus.PRECONDITION_FAILED)
+                    .eTag(actualEtag)
+                    .build();
+        }
+
+        String newEtag = userService.saveMedicalPlan(jsonObject, redisKey);
+        return ResponseEntity
+                .ok()
+                .eTag(newEtag)
+                .body(new JSONObject().put("Message: ", "Successfully updated!").toString());
     }
     
 }
