@@ -2,6 +2,8 @@ package com.marlabs.poc.controller;
 
 import static com.marlabs.poc.constants.UserConstants.*;
 
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.Map;
 
 import org.everit.json.schema.ValidationException;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -203,6 +206,50 @@ public class UserController {
                     .build();
         }
 
+        String newEtag = userService.saveUser(jsonObject, redisKey);
+        return ResponseEntity
+                .ok()
+                .eTag(newEtag)
+                .body(new JSONObject().put("Message: ", "Successfully updated!").toString());
+    }
+    
+    @PutMapping(path = "/{objectType}/{objectId}", produces = "application/json")
+    public ResponseEntity<Object> putPlan(@RequestHeader HttpHeaders headers, @RequestBody String user,
+            @PathVariable String objectId, @PathVariable String objectType) {
+    	
+        String errorMessage = authorizationService.verifyToken(headers);
+        if (errorMessage != null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(new JSONObject().put("Error: ", errorMessage).toString());
+        }
+        
+        JSONObject jsonObject;
+        try {
+            jsonObject = new JSONObject(user);
+        } catch (JSONException jsonException) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new JSONObject().put("Error", "Illegal Json data received!").toString());
+        }
+
+        String redisKey = objectType + PRE_ID_DELIMITER + objectId;
+        if (!userService.existsRedisKey(redisKey)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new JSONObject().put("Message", "ObjectId does not exist").toString());
+        }
+
+        // return status 412 if a mid-air update occurs (e.g. etag/header is different from etag/in-processing)
+        String receivedETag = headers.getFirst(IF_MATCH_HEADER);
+        String actualEtag = userService.getUserEtag(redisKey);
+        if (receivedETag != null && !receivedETag.equals(actualEtag)) {
+            return ResponseEntity
+                    .status(HttpStatus.PRECONDITION_FAILED)
+                    .eTag(actualEtag)
+                    .build();
+        }
+        
+        userService.deleteUser(redisKey);
         String newEtag = userService.saveUser(jsonObject, redisKey);
         return ResponseEntity
                 .ok()
