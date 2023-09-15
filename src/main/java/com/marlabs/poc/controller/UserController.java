@@ -91,7 +91,7 @@ public class UserController {
                             .toString());
         }
         
-        userService.saveMedicalPlan(jsonObject, key);
+        userService.saveUser(jsonObject, key);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -120,7 +120,7 @@ public class UserController {
         String receivedETag = headers.getFirst(IF_NONE_MATCH_HEADER);
         String actualEtag = "";
         if (objectType.equals(USER_OBJECT_TYPE)) {
-            actualEtag = userService.getMedicalPlanEtag(redisKey);
+            actualEtag = userService.getUserEtag(redisKey);
             if (receivedETag != null && receivedETag.equals(actualEtag)) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                         .eTag(actualEtag)
@@ -128,7 +128,7 @@ public class UserController {
             }
         }
 
-        Map<String, Object> plan = userService.getMedicalPlan(redisKey);
+        Map<String, Object> plan = userService.getUser(redisKey);
         return ResponseEntity
                 .ok()
                 .eTag(actualEtag)
@@ -154,7 +154,7 @@ public class UserController {
         }
 
         String receivedETag = headers.getFirst(IF_MATCH_HEADER);
-        String actualEtag = userService.getMedicalPlanEtag(redisKey);
+        String actualEtag = userService.getUserEtag(redisKey);
         if (receivedETag != null && !receivedETag.equals(actualEtag)) {
             return ResponseEntity
                     .status(HttpStatus.PRECONDITION_FAILED)
@@ -162,7 +162,7 @@ public class UserController {
                     .build();
         }
 
-        userService.deleteMedicalPlan(redisKey);
+        userService.deleteUser(redisKey);
 
         return ResponseEntity
                 .noContent()
@@ -195,7 +195,7 @@ public class UserController {
         }
 
         String receivedETag = headers.getFirst(IF_MATCH_HEADER);
-        String actualEtag = userService.getMedicalPlanEtag(redisKey);
+        String actualEtag = userService.getUserEtag(redisKey);
         if (receivedETag != null && !receivedETag.equals(actualEtag)) {
             return ResponseEntity
                     .status(HttpStatus.PRECONDITION_FAILED)
@@ -203,7 +203,7 @@ public class UserController {
                     .build();
         }
 
-        String newEtag = userService.saveMedicalPlan(jsonObject, redisKey);
+        String newEtag = userService.saveUser(jsonObject, redisKey);
         return ResponseEntity
                 .ok()
                 .eTag(newEtag)

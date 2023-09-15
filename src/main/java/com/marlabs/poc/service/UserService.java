@@ -18,8 +18,8 @@ public class UserService {
     @Autowired
     UserDao userDao;
 
-    public String saveMedicalPlan(JSONObject planObject, String key) {
-        Map<String, Object> saveMedicalPlanMap = saveMedicalPlanToRedis(key, planObject);
+    public String saveUser(JSONObject planObject, String key) {
+        Map<String, Object> saveMedicalPlanMap = saveUserToRedis(key, planObject);
         String saveMedicalPlanString = new JSONObject(saveMedicalPlanMap).toString();
 
         String newEtag = DigestUtils.md5DigestAsHex(saveMedicalPlanString.getBytes(StandardCharsets.UTF_8));
@@ -27,12 +27,12 @@ public class UserService {
         return newEtag;
     }
 
-    public Map<String, Object> saveMedicalPlanToRedis(String key, JSONObject planObject) {
+    public Map<String, Object> saveUserToRedis(String key, JSONObject planObject) {
         saveJSONObjectToRedis(planObject);
-        return getMedicalPlan(key);
+        return getUser(key);
     }
 
-    public Map<String, Object> getMedicalPlan(String redisKey) {
+    public Map<String, Object> getUser(String redisKey) {
         Map<String, Object> outputMap = new HashMap<>();
 
         Set<String> keys = userDao.getKeysByPattern(redisKey + REDIS_ALL_PATTERN);
@@ -51,7 +51,7 @@ public class UserService {
                 if (members.size() > 1) {
                     List<Object> listObj = new ArrayList<>();
                     for (String member : members) {
-                        listObj.add(getMedicalPlan(member));
+                        listObj.add(getUser(member));
                     }
                     outputMap.put(newKey, listObj);
                 } else {
@@ -69,7 +69,7 @@ public class UserService {
         return outputMap;
     }
 
-    public void deleteMedicalPlan(String redisKey) {
+    public void deleteUser(String redisKey) {
         Set<String> keys = userDao.getKeysByPattern(redisKey + REDIS_ALL_PATTERN);
         for (String key : keys) { 
             if (key.equals(redisKey)) {
@@ -78,7 +78,7 @@ public class UserService {
                 Set<String> members = userDao.sMembers(key);
                 if (members.size() > 1) {
                     for (String member : members) {
-                        deleteMedicalPlan(member);
+                        deleteUser(member);
                     }
                     userDao.deleteKeys(new String[]{key});
                 } else {
@@ -92,7 +92,7 @@ public class UserService {
         return userDao.existsKey(key);
     }
 
-    public String getMedicalPlanEtag(String key) {
+    public String getUserEtag(String key) {
         return userDao.hGet(key, ETAG_KEY_NAME);
     }
 
