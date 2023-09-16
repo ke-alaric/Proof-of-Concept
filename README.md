@@ -1,10 +1,11 @@
 
 # Proof-of-Concept
-
+Probably to do something like this, upload a document in JSON format, and pass the verification. After that, you can CURD through the post, put, delete with Patch. And use Etag to check whether the data is updated. This document will be stored in Redis. 
 ## Tech Stack
 
 - Spring Boot (Java)
 - Redis
+- Maven
 
 
 ## Features
@@ -15,3 +16,17 @@
 - Support POST, PUT, PATCH, GET and DELETE Http Methods for the REST API
 - Store JSON Objects in Redis key-value store for data persistence
 
+
+## API Endpoints
+- GET `/token` - Generates a JWT token used to authenticate future requests.
+- POST `/token` - Verifies the token.
+- POST `/user` - Creates a new user provided in the request body
+- GET `/{objectType}/{objectId}` - Fetches an existing plan provided by the type and id
+    - An Etag for the object can be provided in the `If-None-Match` HTTP Request Header
+    - If the request is successful, a valid Etag for the object is returned in the `ETag` HTTP Response Header
+- DELETE `/{objectType}/{objectId}` - Deletes an existing plan provided by the type and id
+    - A valid Etag for the object should also be provided in the `If-Match` HTTP Request Header
+- PUT `/{objectType}/{objectId}` - Updates an existing plan provided by the type and id
+    - A valid Etag for the object should also be provided in the `If-Match` HTTP Request Header
+- PATCH `/{objectType}/{objectId}` - Patches an existing plan provided by the type and id
+    - A valid Etag for the object should also be provided in the `If-Match` HTTP Request Header
