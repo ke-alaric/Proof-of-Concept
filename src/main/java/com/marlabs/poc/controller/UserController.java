@@ -2,11 +2,8 @@ package com.marlabs.poc.controller;
 
 import static com.marlabs.poc.constants.UserConstants.*;
 
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.Map;
 
-import org.everit.json.schema.ValidationException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,7 +124,7 @@ public class UserController {
             if (receivedETag != null && receivedETag.equals(actualEtag)) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
                         .eTag(actualEtag)
-                        .body(" {\"Message\": \"Medical plan hasn't been modified!" + "\"}");
+                        .body(" {\"Message\": \"User hasn't been modified!" + "\"}");
             }
         }
 
