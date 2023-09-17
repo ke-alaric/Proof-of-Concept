@@ -30,3 +30,12 @@ Probably to do something like this, upload a document in JSON format, and pass t
     - A valid Etag for the object should also be provided in the `If-Match` HTTP Request Header
 - PATCH `/{objectType}/{objectId}` - Patches an existing plan provided by the type and id
     - A valid Etag for the object should also be provided in the `If-Match` HTTP Request Header
+
+## Tests  
+<img width="1000" src="./pics/pic1.png">
+<img width="1000" src="./pics/pic2.png">
+<img width="1000" src="./pics/pic3.png">
+<img width="1000" src="./pics/pic4.png">
+<img width="1000" src="./pics/pic5.png">
+<img width="1000" src="./pics/pic6.png">
+<img width="1000" src="./pics/pic7.png">
