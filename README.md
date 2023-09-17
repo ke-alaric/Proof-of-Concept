@@ -1,6 +1,6 @@
 
 # Proof-of-Concept
-Probably to do something like this, upload a document in JSON format, and pass the verification. After that, you can CURD through the post, put, delete with Patch. And use Etag to check whether the data is updated. This document will be stored in Redis. 
+The application functions as a user management system. It allows users to upload documents in JSON format and undergo a thorough verification process. Once verified, users gain access to a comprehensive set of CRUD (Create, Read, Update, Delete) operations through HTTP methods such as POST, PUT, DELETE, and PATCH. The application utilizes Etag to efficiently track and confirm data updates. All of this valuable data is securely stored and managed within Redis. 
 ## Tech Stack
 
 - Spring Boot (Java)
